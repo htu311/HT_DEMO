@@ -1,0 +1,74 @@
+name: HT_DEMO_CICD_PIPELINE
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dbscripts/**'
+      
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy-to-dev:
+    runs-on: ubuntu-latest
+    environment: DEV
+	
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Use Python 3.8.x
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.8.x
+          
+      - name: Run Schema Change
+        env:
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SF_PASSWORD }}
+        run: |
+          echo "GITHUB WORKSPACE: $GITHUB_WORKSPACE"
+          python --version
+          echo "Step 1: Installing Schema Changes"
+          pip install schemachange
+          
+          echo "Step 2:Running Schema Changes"
+          schemachange -f $GITHUB_WORKSPACE/dbscripts -a $SF_ACCOUNT -u $SF_USER -r $SF_ROLE -w $SF_WAREHOUSE -d $SF_DATABASE -c $SF_DATABASE.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table
+
+  deploy-to-prod:
+    runs-on: ubuntu-latest
+    environment: PROD
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Use Python 3.8.x
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.8.x
+          
+      - name: Run Schema Change
+        env:
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SF_PASSWORD }}
+        run: |
+          echo "GITHUB WORKSPACE: $GITHUB_WORKSPACE"
+          python --version
+          echo "Step 1: Installing Schema Changes"
+          pip install schemachange
+          
+          echo "Step 2:Running Schema Changes"
+          schemachange -f $GITHUB_WORKSPACE/dbscripts -a $SF_ACCOUNT -u $SF_USER -r $SF_ROLE -w $SF_WAREHOUSE -d $SF_DATABASE -c $SF_DATABASE.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table
